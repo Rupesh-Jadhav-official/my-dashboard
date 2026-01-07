@@ -92,7 +92,7 @@ A terminal-based system monitoring dashboard that provides real-time visibility 
    ```
 4. Install dependencies:
    ```bash
-   pip install psutil rich
+   pip install -r requirements.txt
    ```
 
 ## Usage
