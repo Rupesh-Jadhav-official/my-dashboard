@@ -10,6 +10,15 @@ A terminal-based system monitoring dashboard that provides real-time visibility 
 
 ## Features
 
+### System Information
+- **Hostname**: Machine name
+- **User**: Currently logged-in user
+- **OS**: Operating system and version
+- **IP Address**: Local network IP
+- **Architecture**: System architecture (x64, ARM, etc.)
+- **Processor**: CPU model information
+- **CPU Cores**: Physical and logical core count
+
 ### System Performance Monitoring
 - **CPU Usage**: Real-time CPU percentage with color-coded alerts (red >80%, green <80%)
 - **RAM Usage**: Memory consumption with percentage and GB breakdown
@@ -102,16 +111,19 @@ python main.py
 +--------------------------------------------------+
 |                  HEADER (Title + Uptime)         |
 +------------------------+-------------------------+
-|   CPU & Memory Panel   |    Network Stats Panel  |
-|   - CPU Usage          |    - Bytes Sent         |
-|   - RAM Usage          |    - Bytes Received     |
-|   - Temperature        |    - Packets Sent       |
-|   - Battery Status     |    - Packets Received   |
-+------------------------+-------------------------+
-|   Disk Usage Panel     |   Top Processes Panel   |
-|   - Drive C:           |    - PID, Name          |
-|   - Drive D:           |    - CPU%, Memory%      |
-|   - etc.               |                         |
+|   System Info Panel    |    Network Stats Panel  |
+|   - Hostname, User     |    - Bytes Sent         |
+|   - OS, IP Address     |    - Bytes Received     |
+|   - CPU Cores          |    - Packets Sent       |
++------------------------+    - Packets Received   |
+|   CPU & Memory Panel   |                         |
+|   - CPU Usage          +-------------------------+
+|   - RAM Usage          |   Top Processes Panel   |
+|   - Temperature        |    - PID, Name          |
+|   - Battery Status     |    - CPU%, Memory%      |
++------------------------+                         |
+|   Disk Usage Panel     |                         |
+|   - Drive C:, D:, etc. |                         |
 +------------------------+-------------------------+
 |              Docker Containers Panel             |
 |    Container Name | Image | Status | CPU | Mem   |

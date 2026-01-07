@@ -1,5 +1,8 @@
 from datetime import datetime
 import msvcrt
+import os
+import platform
+import socket
 import subprocess
 import time
 from rich.console import Console
@@ -86,6 +89,63 @@ def get_battery_status():
     except Exception:
         pass
     return None
+
+
+def get_ip_address():
+    """Get the local IP address."""
+    try:
+        # Create a socket to determine the local IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "N/A"
+
+
+def make_system_info() -> Panel:
+    """Create a panel with system information."""
+    table = Table.grid(padding=(0, 2))
+    table.add_column(justify="right", style="dim")
+    table.add_column(justify="left")
+
+    # OS Information
+    os_name = platform.system()
+    os_version = platform.version()
+    os_release = platform.release()
+    os_info = f"{os_name} {os_release}"
+
+    # Hostname
+    hostname = socket.gethostname()
+
+    # IP Address
+    ip_address = get_ip_address()
+
+    # Current User
+    current_user = os.getlogin()
+
+    # Architecture
+    arch = platform.machine()
+
+    # Processor
+    processor = platform.processor()
+    if len(processor) > 30:
+        processor = processor[:27] + "..."
+
+    # CPU Count
+    cpu_count = psutil.cpu_count(logical=True)
+    cpu_physical = psutil.cpu_count(logical=False)
+
+    table.add_row("Hostname:", Text(hostname, style="bold cyan"))
+    table.add_row("User:", Text(current_user, style="bold green"))
+    table.add_row("OS:", Text(os_info, style="bold yellow"))
+    table.add_row("IP Address:", Text(ip_address, style="bold magenta"))
+    table.add_row("Architecture:", Text(arch, style="white"))
+    table.add_row("Processor:", Text(processor, style="white"))
+    table.add_row("CPU Cores:", Text(f"{cpu_physical} physical, {cpu_count} logical", style="white"))
+
+    return Panel(table, title="System Info", border_style="bright_blue")
 
 
 def make_cpu_ram_stats() -> Panel:
@@ -337,8 +397,9 @@ def make_layout() -> Layout:
         Layout(name="right"),
     )
 
-    # Split left column into CPU/RAM and Disk
+    # Split left column into System Info, CPU/RAM and Disk
     layout["left"].split_column(
+        Layout(name="system_info", size=11),
         Layout(name="cpu_ram"),
         Layout(name="disk"),
     )
@@ -351,6 +412,7 @@ def make_layout() -> Layout:
 
     # Assign content to each section
     layout["header"].update(make_header())
+    layout["system_info"].update(make_system_info())
     layout["cpu_ram"].update(make_cpu_ram_stats())
     layout["disk"].update(make_disk_stats())
     layout["network"].update(make_network_stats())
