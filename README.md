@@ -105,6 +105,44 @@ Double-click `My Dashboard.bat` to launch the dashboard.
 python main.py
 ```
 
+## Testing
+
+The project includes a comprehensive test suite with 26 unit tests.
+
+### Run tests via batch file
+Double-click `Run Tests.bat` to run all tests and generate an HTML report.
+
+### Run tests via command line
+```bash
+python -m pytest test_main.py -v
+```
+
+### Generate HTML test report
+```bash
+python -m pytest test_main.py -v --html=report.html --self-contained-html
+```
+
+The HTML report will be saved as `report.html` in the project directory.
+
+### Test Coverage
+
+| Test Class | Description |
+|------------|-------------|
+| `TestGetIpAddress` | IP address retrieval |
+| `TestGetCpuTemperature` | CPU temperature sensor |
+| `TestGetBatteryStatus` | Battery status detection |
+| `TestMakeHeader` | Header panel generation |
+| `TestMakeFooter` | Footer panel generation |
+| `TestMakeSystemInfo` | System info panel |
+| `TestMakeCpuRamStats` | CPU/RAM stats panel |
+| `TestMakeDiskStats` | Disk usage panel |
+| `TestMakeNetworkStats` | Network stats panel |
+| `TestMakeTopProcesses` | Process list panel |
+| `TestMakeDockerStats` | Docker container panel |
+| `TestMakeLayout` | Full layout assembly |
+| `TestMakeProgressBar` | Progress bar rendering |
+| `TestSortToggle` | Sort mode toggle |
+
 ## Dashboard Layout
 
 ```
