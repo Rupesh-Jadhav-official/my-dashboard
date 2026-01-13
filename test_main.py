@@ -1,7 +1,7 @@
 """Unit tests for the System Monitor Dashboard."""
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from datetime import datetime
 from rich.panel import Panel
 from rich.layout import Layout
@@ -14,14 +14,16 @@ class TestGetIpAddress:
         """Test successful IP address retrieval."""
         from main import get_ip_address
 
-        with patch('main.socket.socket') as mock_socket:
+        with patch("main.socket.socket") as mock_socket:
             mock_sock_instance = Mock()
-            mock_sock_instance.getsockname.return_value = ('192.168.1.100', 12345)
+            mock_sock_instance.getsockname.return_value = (
+                "192.168.1.100", 12345
+            )
             mock_socket.return_value = mock_sock_instance
 
             ip = get_ip_address()
 
-            assert ip == '192.168.1.100'
+            assert ip == "192.168.1.100"
             mock_sock_instance.connect.assert_called_once_with(("8.8.8.8", 80))
             mock_sock_instance.close.assert_called_once()
 
@@ -29,7 +31,7 @@ class TestGetIpAddress:
         """Test IP address retrieval when network is unavailable."""
         from main import get_ip_address
 
-        with patch('main.socket.socket') as mock_socket:
+        with patch("main.socket.socket") as mock_socket:
             mock_socket.side_effect = Exception("Network error")
 
             ip = get_ip_address()
@@ -47,8 +49,10 @@ class TestGetCpuTemperature:
         mock_temp = Mock()
         mock_temp.current = 65.5
 
-        with patch('main.psutil.sensors_temperatures', create=True) as mock_sensors:
-            mock_sensors.return_value = {'coretemp': [mock_temp]}
+        with patch(
+            "main.psutil.sensors_temperatures", create=True
+        ) as mock_sensors:
+            mock_sensors.return_value = {"coretemp": [mock_temp]}
 
             temp = get_cpu_temperature()
 
@@ -58,7 +62,9 @@ class TestGetCpuTemperature:
         """Test when CPU temperature is not available."""
         from main import get_cpu_temperature
 
-        with patch('main.psutil.sensors_temperatures', create=True) as mock_sensors:
+        with patch(
+            "main.psutil.sensors_temperatures", create=True
+        ) as mock_sensors:
             mock_sensors.return_value = {}
 
             temp = get_cpu_temperature()
@@ -88,7 +94,7 @@ class TestGetBatteryStatus:
         mock_battery.percent = 75
         mock_battery.power_plugged = True
 
-        with patch('main.psutil.sensors_battery') as mock_sensors:
+        with patch("main.psutil.sensors_battery") as mock_sensors:
             mock_sensors.return_value = mock_battery
 
             battery = get_battery_status()
@@ -100,7 +106,7 @@ class TestGetBatteryStatus:
         """Test when no battery is present (desktop)."""
         from main import get_battery_status
 
-        with patch('main.psutil.sensors_battery') as mock_sensors:
+        with patch("main.psutil.sensors_battery") as mock_sensors:
             mock_sensors.return_value = None
 
             battery = get_battery_status()
@@ -115,9 +121,9 @@ class TestMakeHeader:
         """Test that make_header returns a Panel."""
         from main import make_header
 
-        with patch('main.psutil.boot_time') as mock_boot:
+        with patch("main.psutil.boot_time") as mock_boot:
             # Set boot time to 2 hours ago
-            mock_boot.return_value = (datetime.now().timestamp() - 7200)
+            mock_boot.return_value = datetime.now().timestamp() - 7200
 
             header = make_header()
 
@@ -127,7 +133,7 @@ class TestMakeHeader:
         """Test that header contains the dashboard title."""
         from main import make_header
 
-        with patch('main.psutil.boot_time') as mock_boot:
+        with patch("main.psutil.boot_time") as mock_boot:
             mock_boot.return_value = datetime.now().timestamp() - 3600
 
             header = make_header()
@@ -155,15 +161,21 @@ class TestMakeSystemInfo:
         """Test that make_system_info returns a Panel."""
         from main import make_system_info
 
-        with patch('main.socket.gethostname', return_value='test-host'), \
-             patch('main.os.getlogin', return_value='testuser'), \
-             patch('main.platform.system', return_value='Windows'), \
-             patch('main.platform.release', return_value='10'), \
-             patch('main.platform.version', return_value='10.0.19041'), \
-             patch('main.platform.machine', return_value='AMD64'), \
-             patch('main.platform.processor', return_value='Intel Core i7'), \
-             patch('main.psutil.cpu_count') as mock_cpu_count, \
-             patch('main.get_ip_address', return_value='192.168.1.1'):
+        with patch("main.socket.gethostname", return_value="test-host"), patch(
+            "main.os.getlogin", return_value="testuser"
+        ), patch("main.platform.system", return_value="Windows"), patch(
+            "main.platform.release", return_value="10"
+        ), patch(
+            "main.platform.version", return_value="10.0.19041"
+        ), patch(
+            "main.platform.machine", return_value="AMD64"
+        ), patch(
+            "main.platform.processor", return_value="Intel Core i7"
+        ), patch(
+            "main.psutil.cpu_count"
+        ) as mock_cpu_count, patch(
+            "main.get_ip_address", return_value="192.168.1.1"
+        ):
 
             mock_cpu_count.side_effect = lambda logical: 8 if logical else 4
 
@@ -185,10 +197,11 @@ class TestMakeCpuRamStats:
         mock_memory.used = 8 * 1024**3  # 8 GB
         mock_memory.total = 16 * 1024**3  # 16 GB
 
-        with patch('main.psutil.cpu_percent', return_value=45.0), \
-             patch('main.psutil.virtual_memory', return_value=mock_memory), \
-             patch('main.get_cpu_temperature', return_value=55.0), \
-             patch('main.get_battery_status', return_value=None):
+        with patch("main.psutil.cpu_percent", return_value=45.0), patch(
+            "main.psutil.virtual_memory", return_value=mock_memory
+        ), patch("main.get_cpu_temperature", return_value=55.0), patch(
+            "main.get_battery_status", return_value=None
+        ):
 
             panel = make_cpu_ram_stats()
 
@@ -204,10 +217,11 @@ class TestMakeCpuRamStats:
         mock_memory.used = 8 * 1024**3
         mock_memory.total = 16 * 1024**3
 
-        with patch('main.psutil.cpu_percent', return_value=95.0), \
-             patch('main.psutil.virtual_memory', return_value=mock_memory), \
-             patch('main.get_cpu_temperature', return_value=None), \
-             patch('main.get_battery_status', return_value=None):
+        with patch("main.psutil.cpu_percent", return_value=95.0), patch(
+            "main.psutil.virtual_memory", return_value=mock_memory
+        ), patch("main.get_cpu_temperature", return_value=None), patch(
+            "main.get_battery_status", return_value=None
+        ):
 
             panel = make_cpu_ram_stats()
 
@@ -222,8 +236,8 @@ class TestMakeDiskStats:
         from main import make_disk_stats
 
         mock_partition = Mock()
-        mock_partition.device = 'C:\\'
-        mock_partition.mountpoint = 'C:\\'
+        mock_partition.device = "C:\\"
+        mock_partition.mountpoint = "C:\\"
 
         mock_usage = Mock()
         mock_usage.percent = 65.0
@@ -231,8 +245,11 @@ class TestMakeDiskStats:
         mock_usage.total = 500 * 1024**3  # 500 GB
         mock_usage.free = 300 * 1024**3  # 300 GB
 
-        with patch('main.psutil.disk_partitions', return_value=[mock_partition]), \
-             patch('main.psutil.disk_usage', return_value=mock_usage):
+        with patch(
+            "main.psutil.disk_partitions", return_value=[mock_partition]
+        ), patch(
+            "main.psutil.disk_usage", return_value=mock_usage
+        ):
 
             panel = make_disk_stats()
 
@@ -253,7 +270,7 @@ class TestMakeNetworkStats:
         mock_net_io.packets_sent = 100000
         mock_net_io.packets_recv = 200000
 
-        with patch('main.psutil.net_io_counters', return_value=mock_net_io):
+        with patch("main.psutil.net_io_counters", return_value=mock_net_io):
 
             panel = make_network_stats()
 
@@ -270,13 +287,13 @@ class TestMakeTopProcesses:
 
         mock_proc = Mock()
         mock_proc.info = {
-            'pid': 1234,
-            'name': 'python.exe',
-            'cpu_percent': 25.0,
-            'memory_percent': 5.0
+            "pid": 1234,
+            "name": "python.exe",
+            "cpu_percent": 25.0,
+            "memory_percent": 5.0,
         }
 
-        with patch('main.psutil.process_iter', return_value=[mock_proc]):
+        with patch("main.psutil.process_iter", return_value=[mock_proc]):
 
             panel = make_top_processes()
 
@@ -287,7 +304,7 @@ class TestMakeTopProcesses:
         """Test handling of empty process list."""
         from main import make_top_processes
 
-        with patch('main.psutil.process_iter', return_value=[]):
+        with patch("main.psutil.process_iter", return_value=[]):
 
             panel = make_top_processes()
 
@@ -301,7 +318,7 @@ class TestMakeDockerStats:
         """Test when Docker is not installed."""
         from main import make_docker_stats
 
-        with patch('main.subprocess.run') as mock_run:
+        with patch("main.subprocess.run") as mock_run:
             mock_run.side_effect = FileNotFoundError()
 
             panel = make_docker_stats()
@@ -317,7 +334,7 @@ class TestMakeDockerStats:
         mock_result.returncode = 1
         mock_result.stdout = ""
 
-        with patch('main.subprocess.run', return_value=mock_result):
+        with patch("main.subprocess.run", return_value=mock_result):
 
             panel = make_docker_stats()
 
@@ -331,7 +348,7 @@ class TestMakeDockerStats:
         mock_result.returncode = 0
         mock_result.stdout = ""
 
-        with patch('main.subprocess.run', return_value=mock_result):
+        with patch("main.subprocess.run", return_value=mock_result):
 
             panel = make_docker_stats()
 
@@ -351,8 +368,8 @@ class TestMakeLayout:
         mock_memory.total = 16 * 1024**3
 
         mock_partition = Mock()
-        mock_partition.device = 'C:\\'
-        mock_partition.mountpoint = 'C:\\'
+        mock_partition.device = "C:\\"
+        mock_partition.mountpoint = "C:\\"
 
         mock_usage = Mock()
         mock_usage.percent = 50.0
@@ -366,25 +383,44 @@ class TestMakeLayout:
         mock_net_io.packets_sent = 1000
         mock_net_io.packets_recv = 1000
 
-        with patch('main.psutil.boot_time', return_value=datetime.now().timestamp() - 3600), \
-             patch('main.psutil.cpu_percent', return_value=50.0), \
-             patch('main.psutil.virtual_memory', return_value=mock_memory), \
-             patch('main.psutil.disk_partitions', return_value=[mock_partition]), \
-             patch('main.psutil.disk_usage', return_value=mock_usage), \
-             patch('main.psutil.net_io_counters', return_value=mock_net_io), \
-             patch('main.psutil.process_iter', return_value=[]), \
-             patch('main.psutil.cpu_count', return_value=8), \
-             patch('main.get_cpu_temperature', return_value=None), \
-             patch('main.get_battery_status', return_value=None), \
-             patch('main.get_ip_address', return_value='192.168.1.1'), \
-             patch('main.socket.gethostname', return_value='test-host'), \
-             patch('main.os.getlogin', return_value='testuser'), \
-             patch('main.platform.system', return_value='Windows'), \
-             patch('main.platform.release', return_value='10'), \
-             patch('main.platform.version', return_value='10.0.19041'), \
-             patch('main.platform.machine', return_value='AMD64'), \
-             patch('main.platform.processor', return_value='Intel'), \
-             patch('main.subprocess.run') as mock_docker:
+        boot_time = datetime.now().timestamp() - 3600
+        with patch(
+            "main.psutil.boot_time", return_value=boot_time
+        ), patch("main.psutil.cpu_percent", return_value=50.0), patch(
+            "main.psutil.virtual_memory", return_value=mock_memory
+        ), patch(
+            "main.psutil.disk_partitions", return_value=[mock_partition]
+        ), patch(
+            "main.psutil.disk_usage", return_value=mock_usage
+        ), patch(
+            "main.psutil.net_io_counters", return_value=mock_net_io
+        ), patch(
+            "main.psutil.process_iter", return_value=[]
+        ), patch(
+            "main.psutil.cpu_count", return_value=8
+        ), patch(
+            "main.get_cpu_temperature", return_value=None
+        ), patch(
+            "main.get_battery_status", return_value=None
+        ), patch(
+            "main.get_ip_address", return_value="192.168.1.1"
+        ), patch(
+            "main.socket.gethostname", return_value="test-host"
+        ), patch(
+            "main.os.getlogin", return_value="testuser"
+        ), patch(
+            "main.platform.system", return_value="Windows"
+        ), patch(
+            "main.platform.release", return_value="10"
+        ), patch(
+            "main.platform.version", return_value="10.0.19041"
+        ), patch(
+            "main.platform.machine", return_value="AMD64"
+        ), patch(
+            "main.platform.processor", return_value="Intel"
+        ), patch(
+            "main.subprocess.run"
+        ) as mock_docker:
 
             mock_docker.side_effect = FileNotFoundError()
 

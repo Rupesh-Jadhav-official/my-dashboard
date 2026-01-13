@@ -49,26 +49,42 @@ def make_footer() -> Panel:
     footer_text.append(f"Current Time: {current_time}", style="bold green")
     footer_text.append("  |  ", style="dim")
     footer_text.append("m", style="bold yellow")
-    footer_text.append(f" sort by Memory/CPU (current: {sort_mode})", style="dim")
+    footer_text.append(
+        f" sort by Memory/CPU (current: {sort_mode})", style="dim"
+    )
     footer_text.append("  |  ", style="dim")
     footer_text.append("q", style="bold yellow")
     footer_text.append(" quit", style="dim")
     return Panel(footer_text, style="bright_blue")
 
 
-def make_progress_bar(percent: float, color: str, width: int = 20) -> ProgressBar:
+def make_progress_bar(
+    percent: float, color: str, width: int = 20
+) -> ProgressBar:
     """Create a progress bar with the given percentage and color."""
-    return ProgressBar(total=100, completed=percent, width=width, complete_style=color, finished_style=color)
+    return ProgressBar(
+        total=100,
+        completed=percent,
+        width=width,
+        complete_style=color,
+        finished_style=color,
+    )
 
 
 def get_cpu_temperature():
     """Get CPU temperature if available."""
     try:
-        if hasattr(psutil, 'sensors_temperatures'):
+        if hasattr(psutil, "sensors_temperatures"):
             temps = psutil.sensors_temperatures()
             if temps:
                 # Try common sensor names
-                for name in ['coretemp', 'cpu_thermal', 'k10temp', 'zenpower', 'acpitz']:
+                for name in [
+                    "coretemp",
+                    "cpu_thermal",
+                    "k10temp",
+                    "zenpower",
+                    "acpitz",
+                ]:
                     if name in temps:
                         return temps[name][0].current
                 # If none found, try the first available sensor
@@ -112,7 +128,6 @@ def make_system_info() -> Panel:
 
     # OS Information
     os_name = platform.system()
-    os_version = platform.version()
     os_release = platform.release()
     os_info = f"{os_name} {os_release}"
 
@@ -143,7 +158,10 @@ def make_system_info() -> Panel:
     table.add_row("IP Address:", Text(ip_address, style="bold magenta"))
     table.add_row("Architecture:", Text(arch, style="white"))
     table.add_row("Processor:", Text(processor, style="white"))
-    table.add_row("CPU Cores:", Text(f"{cpu_physical} physical, {cpu_count} logical", style="white"))
+    table.add_row(
+        "CPU Cores:",
+        Text(f"{cpu_physical} physical, {cpu_count} logical", style="white"),
+    )
 
     return Panel(table, title="System Info", border_style="bright_blue")
 
@@ -174,31 +192,54 @@ def make_cpu_ram_stats() -> Panel:
     # Add CPU temperature if available
     cpu_temp = get_cpu_temperature()
     if cpu_temp is not None:
-        temp_color = "red" if cpu_temp > 80 else "yellow" if cpu_temp > 60 else "green"
-        table.add_row("CPU Temp:", Text(f"{cpu_temp:.1f}°C", style=f"bold {temp_color}"))
+        if cpu_temp > 80:
+            temp_color = "red"
+        elif cpu_temp > 60:
+            temp_color = "yellow"
+        else:
+            temp_color = "green"
+        table.add_row(
+            "CPU Temp:", Text(f"{cpu_temp:.1f}°C", style=f"bold {temp_color}")
+        )
     else:
         table.add_row("CPU Temp:", Text("N/A", style="dim"))
 
     table.add_row("RAM Usage:", ram_bar, ram_text)
-    table.add_row("RAM Used:", Text(f"{memory.used / (1024**3):.2f} GB / {memory.total / (1024**3):.2f} GB", style="dim"))
+    used_gb = memory.used / (1024**3)
+    total_gb = memory.total / (1024**3)
+    table.add_row(
+        "RAM Used:",
+        Text(f"{used_gb:.2f} GB / {total_gb:.2f} GB", style="dim"),
+    )
 
     # Add battery status if available
     battery = get_battery_status()
     if battery:
         bat_percent = battery.percent
-        bat_color = "red" if bat_percent < 20 else "yellow" if bat_percent < 50 else "green"
+        if bat_percent < 20:
+            bat_color = "red"
+        elif bat_percent < 50:
+            bat_color = "yellow"
+        else:
+            bat_color = "green"
         bat_bar = make_progress_bar(bat_percent, bat_color)
         bat_text = Text(f"{bat_percent:5.1f}%", style=f"bold {bat_color}")
 
         # Status indicator
         if battery.power_plugged:
-            status = Text(" [Charging]", style="bold green") if bat_percent < 100 else Text(" [Full]", style="bold green")
+            status = (
+                Text(" [Charging]", style="bold green")
+                if bat_percent < 100
+                else Text(" [Full]", style="bold green")
+            )
         else:
             # Calculate time remaining
-            if battery.secsleft > 0 and battery.secsleft != psutil.POWER_TIME_UNLIMITED:
+            not_unlimited = battery.secsleft != psutil.POWER_TIME_UNLIMITED
+            if battery.secsleft > 0 and not_unlimited:
                 hours, remainder = divmod(battery.secsleft, 3600)
                 minutes, _ = divmod(remainder, 60)
-                status = Text(f" [{int(hours)}h {int(minutes)}m left]", style="dim")
+                time_left = f" [{int(hours)}h {int(minutes)}m left]"
+                status = Text(time_left, style="dim")
             else:
                 status = Text(" [Discharging]", style="yellow")
 
@@ -221,17 +262,35 @@ def make_disk_stats() -> Panel:
         try:
             usage = psutil.disk_usage(partition.mountpoint)
             disk_percent = usage.percent
-            disk_color = "red" if disk_percent > 90 else "yellow" if disk_percent > 70 else "green"
+            disk_color = (
+                "red"
+                if disk_percent > 90
+                else "yellow" if disk_percent > 70 else "green"
+            )
 
             disk_bar = make_progress_bar(disk_percent, disk_color)
-            disk_text = Text(f"{disk_percent:5.1f}%", style=f"bold {disk_color}")
+            disk_style = f"bold {disk_color}"
+            disk_text = Text(f"{disk_percent:5.1f}%", style=disk_style)
 
             free_gb = usage.free / (1024**3)
-            free_color = "red" if free_gb < 10 else "yellow" if free_gb < 50 else "green"
+            if free_gb < 10:
+                free_color = "red"
+            elif free_gb < 50:
+                free_color = "yellow"
+            else:
+                free_color = "green"
 
             table.add_row(f"{partition.device}:", disk_bar, disk_text)
-            table.add_row("  Used:", Text(f"{usage.used / (1024**3):.1f} GB / {usage.total / (1024**3):.1f} GB", style="dim"))
-            table.add_row("  Free:", Text(f"{free_gb:.1f} GB", style=f"bold {free_color}"))
+            used_disk = usage.used / (1024**3)
+            total_disk = usage.total / (1024**3)
+            table.add_row(
+                "  Used:",
+                Text(f"{used_disk:.1f} GB / {total_disk:.1f} GB", style="dim"),
+            )
+            free_style = f"bold {free_color}"
+            table.add_row(
+                "  Free:", Text(f"{free_gb:.1f} GB", style=free_style)
+            )
         except (PermissionError, OSError):
             continue
 
@@ -251,7 +310,7 @@ def make_network_stats() -> Panel:
 
     # Format bytes to appropriate unit
     def format_bytes(b):
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if b < 1024:
                 return f"{b:.2f} {unit}"
             b /= 1024
@@ -270,7 +329,7 @@ def make_network_stats() -> Panel:
 
 def make_top_processes() -> Panel:
     """Create a panel showing top 5 processes by CPU or memory usage."""
-    sort_key = 'memory_percent' if sort_by_memory else 'cpu_percent'
+    sort_key = "memory_percent" if sort_by_memory else "cpu_percent"
     sort_label = "Memory" if sort_by_memory else "CPU"
 
     table = Table(expand=True, box=None, padding=(0, 1))
@@ -280,31 +339,37 @@ def make_top_processes() -> Panel:
     table.add_column("Mem %", justify="right", width=7)
 
     processes = []
-    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+    proc_attrs = ["pid", "name", "cpu_percent", "memory_percent"]
+    for proc in psutil.process_iter(proc_attrs):
         try:
             pinfo = proc.info
-            if pinfo['cpu_percent'] is not None:
+            if pinfo["cpu_percent"] is not None:
                 processes.append(pinfo)
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        except (psutil.NoSuchProcess, psutil.AccessDenied,
+                psutil.ZombieProcess):
             pass
 
     # Sort by selected metric descending and get top 5
-    top_processes = sorted(processes, key=lambda x: x[sort_key] or 0, reverse=True)[:5]
+    sorted_procs = sorted(
+        processes, key=lambda x: x[sort_key] or 0, reverse=True
+    )
+    top_processes = sorted_procs[:5]
 
     for proc in top_processes:
-        cpu = proc['cpu_percent'] or 0
-        mem = proc['memory_percent'] or 0
+        cpu = proc["cpu_percent"] or 0
+        mem = proc["memory_percent"] or 0
         cpu_color = "red" if cpu > 50 else "yellow" if cpu > 20 else "green"
         mem_color = "red" if mem > 50 else "yellow" if mem > 20 else "cyan"
 
         table.add_row(
-            str(proc['pid']),
-            proc['name'][:20] if proc['name'] else "N/A",
+            str(proc["pid"]),
+            proc["name"][:20] if proc["name"] else "N/A",
             Text(f"{cpu:.1f}%", style=f"bold {cpu_color}"),
-            Text(f"{mem:.1f}%", style=f"bold {mem_color}")
+            Text(f"{mem:.1f}%", style=f"bold {mem_color}"),
         )
 
-    return Panel(table, title=f"Top Processes (by {sort_label})", border_style="bright_blue")
+    title = f"Top Processes (by {sort_label})"
+    return Panel(table, title=title, border_style="bright_blue")
 
 
 def make_docker_stats() -> Panel:
@@ -319,35 +384,58 @@ def make_docker_stats() -> Panel:
     try:
         # Get running containers
         result = subprocess.run(
-            ['docker', 'ps', '--format', '{{.Names}}\t{{.Image}}\t{{.Status}}'],
-            capture_output=True, text=True, timeout=5, creationflags=subprocess.CREATE_NO_WINDOW
+            ["docker", "ps", "--format",
+             "{{.Names}}\t{{.Image}}\t{{.Status}}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            creationflags=subprocess.CREATE_NO_WINDOW,
         )
 
         if result.returncode != 0:
-            return Panel(Text("Docker not available or not running", style="dim"), title="Docker Containers", border_style="bright_blue")
+            return Panel(
+                Text("Docker not available or not running", style="dim"),
+                title="Docker Containers",
+                border_style="bright_blue",
+            )
 
-        containers = result.stdout.strip().split('\n')
-        if not containers or containers == ['']:
-            return Panel(Text("No running containers", style="dim"), title="Docker Containers", border_style="bright_blue")
+        containers = result.stdout.strip().split("\n")
+        if not containers or containers == [""]:
+            return Panel(
+                Text("No running containers", style="dim"),
+                title="Docker Containers",
+                border_style="bright_blue",
+            )
 
         # Get stats for running containers
         stats_result = subprocess.run(
-            ['docker', 'stats', '--no-stream', '--format', '{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}'],
-            capture_output=True, text=True, timeout=10, creationflags=subprocess.CREATE_NO_WINDOW
+            [
+                "docker",
+                "stats",
+                "--no-stream",
+                "--format",
+                "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW,
         )
 
         stats_dict = {}
         if stats_result.returncode == 0:
-            for line in stats_result.stdout.strip().split('\n'):
+            for line in stats_result.stdout.strip().split("\n"):
                 if line:
-                    parts = line.split('\t')
+                    parts = line.split("\t")
                     if len(parts) >= 3:
-                        stats_dict[parts[0]] = {'cpu': parts[1], 'mem': parts[2]}
+                        stats_dict[parts[0]] = {
+                            "cpu": parts[1], "mem": parts[2]
+                        }
 
         for container in containers:
             if not container:
                 continue
-            parts = container.split('\t')
+            parts = container.split("\t")
             if len(parts) >= 3:
                 name = parts[0][:15]
                 image = parts[1][:20]
@@ -359,22 +447,46 @@ def make_docker_stats() -> Panel:
 
                 # Get stats
                 stats = stats_dict.get(parts[0], {})
-                cpu = stats.get('cpu', 'N/A')
-                mem = stats.get('mem', 'N/A')
+                cpu = stats.get("cpu", "N/A")
+                mem = stats.get("mem", "N/A")
 
                 # Color CPU
-                cpu_val = float(cpu.replace('%', '')) if cpu != 'N/A' and '%' in cpu else 0
-                cpu_color = "red" if cpu_val > 80 else "yellow" if cpu_val > 50 else "green"
-                cpu_text = Text(cpu, style=f"bold {cpu_color}") if cpu != 'N/A' else Text("N/A", style="dim")
+                if cpu != "N/A" and "%" in cpu:
+                    cpu_val = float(cpu.replace("%", ""))
+                else:
+                    cpu_val = 0
+                if cpu_val > 80:
+                    cpu_color = "red"
+                elif cpu_val > 50:
+                    cpu_color = "yellow"
+                else:
+                    cpu_color = "green"
+                cpu_text = (
+                    Text(cpu, style=f"bold {cpu_color}")
+                    if cpu != "N/A"
+                    else Text("N/A", style="dim")
+                )
 
                 table.add_row(name, image, status_text, cpu_text, mem)
 
     except FileNotFoundError:
-        return Panel(Text("Docker is not installed", style="dim"), title="Docker Containers", border_style="bright_blue")
+        return Panel(
+            Text("Docker is not installed", style="dim"),
+            title="Docker Containers",
+            border_style="bright_blue",
+        )
     except subprocess.TimeoutExpired:
-        return Panel(Text("Docker command timed out", style="dim"), title="Docker Containers", border_style="bright_blue")
+        return Panel(
+            Text("Docker command timed out", style="dim"),
+            title="Docker Containers",
+            border_style="bright_blue",
+        )
     except Exception as e:
-        return Panel(Text(f"Error: {str(e)[:30]}", style="red"), title="Docker Containers", border_style="bright_blue")
+        return Panel(
+            Text(f"Error: {str(e)[:30]}", style="red"),
+            title="Docker Containers",
+            border_style="bright_blue",
+        )
 
     return Panel(table, title="Docker Containers", border_style="bright_blue")
 
@@ -431,14 +543,16 @@ def main():
     psutil.cpu_percent(interval=None)
 
     # Use Live to auto-refresh every 2 seconds
-    with Live(make_layout(), console=console, refresh_per_second=0.5, screen=True) as live:
+    with Live(
+        make_layout(), console=console, refresh_per_second=0.5, screen=True
+    ) as live:
         while True:
             # Check for keyboard input
             if msvcrt.kbhit():
-                key = msvcrt.getch().decode('utf-8', errors='ignore').lower()
-                if key == 'q':
+                key = msvcrt.getch().decode("utf-8", errors="ignore").lower()
+                if key == "q":
                     break
-                elif key == 'm':
+                elif key == "m":
                     sort_by_memory = not sort_by_memory
             live.update(make_layout())
             time.sleep(0.1)  # Small delay to reduce CPU usage
