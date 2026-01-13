@@ -13,7 +13,7 @@ __pycache__/
 .pytest_cache/
 htmlcov/
 .coverage
-report.html
+reports/
 
 # IDE
 .vscode/
@@ -22,3 +22,6 @@ report.html
 # OS files
 .DS_Store
 Thumbs.db
+
+# Claude Code temp files
+tmpclaude-*

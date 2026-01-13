@@ -15,11 +15,11 @@ python main.py
 # Run tests
 python -m pytest test_main.py -v
 
-# Run tests with HTML report
-python -m pytest test_main.py -v --html=report.html --self-contained-html
+# Run tests with HTML report (saved to reports folder with timestamp)
+python -m pytest test_main.py -v --html=reports/report_YYYY-MM-DD_HH-MM-SS.html --self-contained-html
 ```
 
-Windows batch files are also available: `My Dashboard.bat` (launcher) and `Run Tests.bat` (test runner).
+Windows batch files are also available: `My Dashboard.bat` (launcher) and `Run Tests.bat` (test runner with timestamped reports).
 
 ## Architecture
 
